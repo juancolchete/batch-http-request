@@ -26,7 +26,8 @@ const headers = { 'Content-Type': core.getInput('contentType') || 'application/j
 if (!!core.getInput('bearerToken')) {
   headers['Authorization'] = `Bearer ${core.getInput('bearerToken')}`;
 }
-
+console.log("hola")
+console.log( core.getInput('url', { required: true }))
 /** @type {axios.AxiosRequestConfig} */
 const instanceConfig = {
   baseURL: core.getInput('url', { required: true }),
