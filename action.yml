@@ -1,4 +1,4 @@
-name: 'HTTP Request Action'
+name: 'Batch HTTP Request'
 description: 'Create any HTTP Request'
 inputs:
     url:
