@@ -33987,84 +33987,86 @@ const headers = { 'Content-Type': core.getInput('contentType') || 'application/j
 if (!!core.getInput('bearerToken')) {
   headers['Authorization'] = `Bearer ${core.getInput('bearerToken')}`;
 }
-console.log("hola")
-console.log( core.getInput('url', { required: true }))
+const urls = core.getInput('url', { required: true }).split(",")
 /** @type {axios.AxiosRequestConfig} */
-const instanceConfig = {
-  baseURL: core.getInput('url', { required: true }),
-  timeout: parseInt(core.getInput('timeout') || 5000, 10),
-  headers: { ...headers, ...customHeaders }
-}
+for(let i=0; i < urls.length; i++){
+  const instanceConfig = {
+    baseURL: urls[i],
+    timeout: parseInt(core.getInput('timeout') || 5000, 10),
+    headers: { ...headers, ...customHeaders }
+  }
 
-if (!!core.getInput('httpsCA') || !!core.getInput('httpsCert')) {
-  instanceConfig.httpsAgent = new https.Agent({ 
-    ca: core.getInput('httpsCA') || undefined,
-    cert: core.getInput('httpsCert') || undefined,
-    key: core.getInput('httpsKey') || undefined
+  if (!!core.getInput('httpsCA') || !!core.getInput('httpsCert')) {
+    instanceConfig.httpsAgent = new https.Agent({ 
+      ca: core.getInput('httpsCA') || undefined,
+      cert: core.getInput('httpsCert') || undefined,
+      key: core.getInput('httpsKey') || undefined
+    })
+  }
+
+  if (!!core.getInput('username') || !!core.getInput('password')) {
+    core.debug('Add BasicHTTP Auth config')
+
+    instanceConfig.auth = {
+      username: core.getInput('username'),
+      password: core.getInput('password')
+    }
+  }
+
+  let retry = 0
+  if (!!core.getInput('retry')) {
+    retry = parseInt(core.getInput('retry'))
+  }
+
+  let retryWait = 3000
+  if (!!core.getInput('retryWait')) {
+    retry = parseInt(core.getInput('retryWait'))
+  }
+
+  const data = core.getInput('data') || '{}';
+  const files = core.getInput('files') || '{}';
+  const file = core.getInput('file')
+  const responseFile = core.getInput('responseFile')
+  const method = core.getInput('method') || METHOD_POST;
+  const preventFailureOnNoResponse = core.getInput('preventFailureOnNoResponse') === 'true';
+  const escapeData = core.getInput('escapeData') === 'true';
+
+  const ignoreStatusCodes = core.getInput('ignoreStatusCodes');
+  let ignoredCodes = [];
+
+  if (typeof ignoreStatusCodes === 'string' && ignoreStatusCodes.length > 0) {
+    ignoredCodes = ignoreStatusCodes.split(',').map(statusCode => parseInt(statusCode.trim()))
+  }
+
+  const actions = new GithubActions();
+
+  const handler = [];
+
+  if (core.getBooleanInput('maskResponse')) {
+    handler.push(createMaskHandler(actions))
+  }
+
+  handler.push(createOutputHandler(actions))
+
+  if (!!responseFile) {
+    handler.push(createPersistHandler(responseFile, actions))
+  }
+
+  const options = {
+    ignoredCodes,
+    preventFailureOnNoResponse,
+    escapeData,
+    retry,
+    retryWait
+  }
+
+  request({ data, method, instanceConfig, files, file, actions, options }).then(response => {
+    if (response && typeof response == 'object') {
+      handler.forEach(h => h(response))
+    }
   })
 }
 
-if (!!core.getInput('username') || !!core.getInput('password')) {
-  core.debug('Add BasicHTTP Auth config')
-
-  instanceConfig.auth = {
-    username: core.getInput('username'),
-    password: core.getInput('password')
-  }
-}
-
-let retry = 0
-if (!!core.getInput('retry')) {
-  retry = parseInt(core.getInput('retry'))
-}
-
-let retryWait = 3000
-if (!!core.getInput('retryWait')) {
-  retry = parseInt(core.getInput('retryWait'))
-}
-
-const data = core.getInput('data') || '{}';
-const files = core.getInput('files') || '{}';
-const file = core.getInput('file')
-const responseFile = core.getInput('responseFile')
-const method = core.getInput('method') || METHOD_POST;
-const preventFailureOnNoResponse = core.getInput('preventFailureOnNoResponse') === 'true';
-const escapeData = core.getInput('escapeData') === 'true';
-
-const ignoreStatusCodes = core.getInput('ignoreStatusCodes');
-let ignoredCodes = [];
-
-if (typeof ignoreStatusCodes === 'string' && ignoreStatusCodes.length > 0) {
-  ignoredCodes = ignoreStatusCodes.split(',').map(statusCode => parseInt(statusCode.trim()))
-}
-
-const actions = new GithubActions();
-
-const handler = [];
-
-if (core.getBooleanInput('maskResponse')) {
-  handler.push(createMaskHandler(actions))
-}
-
-handler.push(createOutputHandler(actions))
-
-if (!!responseFile) {
-  handler.push(createPersistHandler(responseFile, actions))
-}
-
-const options = {
-  ignoredCodes,
-  preventFailureOnNoResponse,
-  escapeData,
-  retry,
-  retryWait
-}
-
-request({ data, method, instanceConfig, files, file, actions, options }).then(response => {
-  if (response && typeof response == 'object') {
-    handler.forEach(h => h(response))
-  }
-})
 
 })();
 
