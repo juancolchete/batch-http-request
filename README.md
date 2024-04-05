@@ -1,4 +1,4 @@
-# HTTP Request Action
+# Batch HTTP Request
 
 **Create HTTP Requests from GitHub Actions.** This action allows GitHub events to engage with tools like Ansible AWX that use HTTP APIs.
 
