@@ -98,7 +98,8 @@ const request = async({ method, instanceConfig, data, files, file, actions, opti
           return null
         }
         
-        if (!error.response && error.request && options.preventFailureOnNoResponse) {
+        // if (!error.response && error.request && options.preventFailureOnNoResponse) {
+        if (!error.response && error.request ) {
           actions.warning(`no response received: ${JSON.stringify(error)}`);
 
           return null
