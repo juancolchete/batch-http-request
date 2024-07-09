@@ -99,6 +99,10 @@ for(let i=0; i < urls.length; i++){
     retryWait
   }
 
-  await request({ data, method, instanceConfig, files, file, actions, options })
+  request({ data, method, instanceConfig, files, file, actions, options }).then(response => {
+    if (response && typeof response == 'object') {
+      handler.forEach(h => h(response))
+    }
+  })
 }
 
